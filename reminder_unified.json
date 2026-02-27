@@ -20,37 +20,22 @@
     },
     {
       "id": "e001-0000-0000-0000-000000000002",
-      "name": "GET записи на завтра",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "name": "Supabase: записи на завтра",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [240, 300],
       "parameters": {
-        "method": "GET",
-        "url": "={{ 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/appointments?reminder_24h=is.null&status=neq.cancelled&date=gte.' + $now.plus({days:1}).startOf('day').toISO() + '&date=lte.' + $now.plus({days:1}).endOf('day').toISO() + '&select=record_id,date,tg_id,wa_id,max_id,phone,YC_ID,client_id,clientName,service_name,master_name' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
-            }
-          ]
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "e001-0000-0000-0000-000000000003",
-      "name": "Разобрать массив записей",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [480, 300],
-      "parameters": {
-        "jsCode": "const body = $input.first().json;\nif (!Array.isArray(body) || body.length === 0) return [];\nreturn body.map(item => ({ json: item }));"
+        "operation": "getAll",
+        "tableId": "appointments",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "={{ 'reminder_24h=is.null&status=neq.cancelled&date=gte.' + $now.plus({days:1}).startOf('day').toISO() + '&date=lte.' + $now.plus({days:1}).endOf('day').toISO() }}"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CRED_ID",
+          "name": "Supabase"
+        }
       }
     },
     {
@@ -58,32 +43,28 @@
       "name": "По одной записи",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [720, 300],
+      "position": [480, 300],
       "parameters": { "options": {} }
     },
     {
       "id": "e001-0000-0000-0000-000000000005",
-      "name": "GET клиент по tg_id",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [960, 200],
+      "name": "Supabase: клиент по tg_id",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [720, 200],
       "parameters": {
-        "method": "GET",
-        "url": "={{ 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/clients_tg?tg_id=eq.' + $json.tg_id + '&select=tg_id,first_name,last_name,blocked,can_message' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
-            }
-          ]
-        },
-        "options": {}
+        "operation": "getAll",
+        "tableId": "clients_tg",
+        "returnAll": false,
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "={{ 'tg_id=eq.' + $json.tg_id }}"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CRED_ID",
+          "name": "Supabase"
+        }
       }
     },
     {
@@ -91,9 +72,9 @@
       "name": "Объединить + выбрать канал",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1200, 200],
+      "position": [960, 200],
       "parameters": {
-        "jsCode": "const appt = $('По одной записи').item.json;\nconst clientRaw = $input.first().json;\nconst client = Array.isArray(clientRaw) && clientRaw.length > 0 ? clientRaw[0] : {};\n\n// Форматирование даты\nconst dt = new Date(appt.date);\nconst dateFormatted = dt.toLocaleDateString('ru-RU', {\n  weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Moscow'\n}) + ' в ' + dt.toLocaleTimeString('ru-RU', {\n  hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'\n});\n\n// Имя клиента\nconst clientName = client.first_name\n  ? (client.first_name + (client.last_name ? ' ' + client.last_name : ''))\n  : (appt.clientName || 'Клиент');\n\n// Текст для rich-каналов (TG, WA, Max)\nconst richText = `📅 Напоминание о записи\\n\\nПривет, ${clientName}! Напоминаем о вашей записи в салоне красоты Пять ручек:\\n\\n🗓 Дата: ${dateFormatted}\\n✂️ Услуга: ${appt.service_name || ''}\\n👤 Мастер: ${appt.master_name || ''}\\n\\nЖдём вас!`;\n\n// Текст для SMS (без эмодзи, короче)\nconst smsText = `Напоминаем: завтра ${dateFormatted} в салоне Пять ручек. Услуга: ${appt.service_name || ''}. Мастер: ${appt.master_name || ''}. Ждём вас!`;\n\n// Определение канала по приоритету: TG → Max → WA → SMS\nconst tgOk = appt.tg_id && client.can_message !== 'false' && client.blocked !== 'true';\nconst maxOk = appt.max_id;\nconst waOk  = appt.wa_id;\nconst smsOk = appt.phone;\n\nlet channel = 'none';\nif (tgOk)       channel = 'telegram';\nelse if (maxOk) channel = 'max';\nelse if (waOk)  channel = 'whatsapp';\nelse if (smsOk) channel = 'sms';\n\n// Если нет ни одного канала — пропускаем запись\nif (channel === 'none') return [];\n\nreturn [{\n  json: {\n    record_id:     appt.record_id,\n    channel:       channel,\n    tg_id:         String(appt.tg_id || ''),\n    wa_id:         String(appt.wa_id || ''),\n    max_id:        String(appt.max_id || ''),\n    phone:         String(appt.phone || ''),\n    service_name:  appt.service_name || '',\n    master_name:   appt.master_name  || '',\n    client_name:   clientName,\n    date_formatted: dateFormatted,\n    rich_text:     richText,\n    sms_text:      smsText\n  }\n}];"
+        "jsCode": "// Запись из SplitInBatches\nconst appt = $('По одной записи').item.json;\n\n// Клиент из Supabase-ноды (возвращает items напрямую, не массив)\nconst clientItems = $input.all();\nconst client = clientItems.length > 0 ? clientItems[0].json : {};\n\n// Форматирование даты\nconst dt = new Date(appt.date);\nconst dateFormatted = dt.toLocaleDateString('ru-RU', {\n  weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Moscow'\n}) + ' в ' + dt.toLocaleTimeString('ru-RU', {\n  hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'\n});\n\n// Имя: из clients_tg или из appointments\nconst clientName = client.first_name\n  ? (client.first_name + (client.last_name ? ' ' + client.last_name : ''))\n  : (appt.clientName || 'Клиент');\n\n// Текст для rich-каналов (TG, WA, Max)\nconst richText = `📅 Напоминание о записи\\n\\nПривет, ${clientName}! Напоминаем о вашей записи в салоне красоты Пять ручек:\\n\\n🗓 Дата: ${dateFormatted}\\n✂️ Услуга: ${appt.service_name || ''}\\n👤 Мастер: ${appt.master_name || ''}\\n\\nЖдём вас!`;\n\n// Текст для SMS (без эмодзи, лаконично)\nconst smsText = `Напоминаем: завтра ${dateFormatted} в салоне Пять ручек. Услуга: ${appt.service_name || ''}. Мастер: ${appt.master_name || ''}. Ждём вас!`;\n\n// Приоритет каналов: TG → Max → WA → SMS\nconst tgOk  = appt.tg_id  && client.can_message !== 'false' && client.blocked !== 'true';\nconst maxOk = !!appt.max_id;\nconst waOk  = !!appt.wa_id;\nconst smsOk = !!appt.phone;\n\nlet channel = 'none';\nif (tgOk)       channel = 'telegram';\nelse if (maxOk) channel = 'max';\nelse if (waOk)  channel = 'whatsapp';\nelse if (smsOk) channel = 'sms';\n\n// Нет ни одного канала — пропускаем\nif (channel === 'none') return [];\n\nreturn [{\n  json: {\n    record_id:      appt.record_id,\n    channel:        channel,\n    tg_id:          String(appt.tg_id  || ''),\n    wa_id:          String(appt.wa_id  || ''),\n    max_id:         String(appt.max_id || ''),\n    phone:          String(appt.phone  || ''),\n    service_name:   appt.service_name  || '',\n    master_name:    appt.master_name   || '',\n    client_name:    clientName,\n    date_formatted: dateFormatted,\n    rich_text:      richText,\n    sms_text:       smsText\n  }\n}];"
       }
     },
     {
@@ -101,7 +82,7 @@
       "name": "Switch: канал отправки",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 2,
-      "position": [1440, 200],
+      "position": [1200, 200],
       "parameters": {
         "dataType": "string",
         "value1": "={{ $json.channel }}",
@@ -116,25 +97,19 @@
         "fallbackOutput": "none"
       }
     },
-
     {
       "id": "e001-0000-0000-0000-000000000008",
       "name": "[TG] Отправить напоминание",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1680, -20],
+      "position": [1440, -20],
       "parameters": {
         "chatId": "={{ $json.tg_id }}",
         "text": "={{ $json.rich_text }}",
-        "additionalFields": {
-          "appendAttribution": false
-        }
+        "additionalFields": { "appendAttribution": false }
       },
       "credentials": {
-        "telegramApi": {
-          "id": "56b5PgNwe1YoXmQn",
-          "name": "test"
-        }
+        "telegramApi": { "id": "56b5PgNwe1YoXmQn", "name": "test" }
       }
     },
     {
@@ -142,7 +117,7 @@
       "name": "[TG] Supabase: reminder_24h = sent_tg",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1920, -20],
+      "position": [1680, -20],
       "parameters": {
         "operation": "update",
         "tableId": "appointments",
@@ -155,29 +130,22 @@
         }
       },
       "credentials": {
-        "supabaseApi": {
-          "id": "YOUR_SUPABASE_CRED_ID",
-          "name": "Supabase"
-        }
+        "supabaseApi": { "id": "YOUR_SUPABASE_CRED_ID", "name": "Supabase" }
       }
     },
-
     {
       "id": "e001-0000-0000-0000-000000000010",
       "name": "[Max] Отправить напоминание",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1680, 160],
+      "position": [1440, 160],
       "parameters": {
         "method": "POST",
         "url": "ЗАМЕНИ_НА_MAX_WEBHOOK_URL",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer ЗАМЕНИ_НА_MAX_TOKEN"
-            }
+            { "name": "Authorization", "value": "Bearer ЗАМЕНИ_НА_MAX_TOKEN" }
           ]
         },
         "sendBody": true,
@@ -195,7 +163,7 @@
       "name": "[Max] Supabase: reminder_24h = sent_max",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1920, 160],
+      "position": [1680, 160],
       "parameters": {
         "operation": "update",
         "tableId": "appointments",
@@ -208,29 +176,22 @@
         }
       },
       "credentials": {
-        "supabaseApi": {
-          "id": "YOUR_SUPABASE_CRED_ID",
-          "name": "Supabase"
-        }
+        "supabaseApi": { "id": "YOUR_SUPABASE_CRED_ID", "name": "Supabase" }
       }
     },
-
     {
       "id": "e001-0000-0000-0000-000000000012",
       "name": "[WA] Отправить напоминание",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1680, 340],
+      "position": [1440, 340],
       "parameters": {
         "method": "POST",
         "url": "https://api.wazzup24.com/v3/message",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer e729722567ce42199e74f4cc8e6acf4a"
-            }
+            { "name": "Authorization", "value": "Bearer e729722567ce42199e74f4cc8e6acf4a" }
           ]
         },
         "sendBody": true,
@@ -250,7 +211,7 @@
       "name": "[WA] Supabase: reminder_24h = sent_wa",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1920, 340],
+      "position": [1680, 340],
       "parameters": {
         "operation": "update",
         "tableId": "appointments",
@@ -263,29 +224,22 @@
         }
       },
       "credentials": {
-        "supabaseApi": {
-          "id": "YOUR_SUPABASE_CRED_ID",
-          "name": "Supabase"
-        }
+        "supabaseApi": { "id": "YOUR_SUPABASE_CRED_ID", "name": "Supabase" }
       }
     },
-
     {
       "id": "e001-0000-0000-0000-000000000014",
       "name": "[SMS] Отправить напоминание",
       "type": "n8n-nodes-base.sms77",
       "typeVersion": 1,
-      "position": [1680, 520],
+      "position": [1440, 520],
       "parameters": {
         "to": "={{ $json.phone }}",
         "message": "={{ $json.sms_text }}",
         "options": {}
       },
       "credentials": {
-        "sms77Api": {
-          "id": "UbHSQrpL2EN5yzQn",
-          "name": "seven account"
-        }
+        "sms77Api": { "id": "UbHSQrpL2EN5yzQn", "name": "seven account" }
       }
     },
     {
@@ -293,7 +247,7 @@
       "name": "[SMS] Supabase: reminder_24h = sent_sms",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1920, 520],
+      "position": [1680, 520],
       "parameters": {
         "operation": "update",
         "tableId": "appointments",
@@ -306,30 +260,24 @@
         }
       },
       "credentials": {
-        "supabaseApi": {
-          "id": "YOUR_SUPABASE_CRED_ID",
-          "name": "Supabase"
-        }
+        "supabaseApi": { "id": "YOUR_SUPABASE_CRED_ID", "name": "Supabase" }
       }
     }
   ],
   "connections": {
     "Каждый день в 9:00": {
-      "main": [[{ "node": "GET записи на завтра", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Supabase: записи на завтра", "type": "main", "index": 0 }]]
     },
-    "GET записи на завтра": {
-      "main": [[{ "node": "Разобрать массив записей", "type": "main", "index": 0 }]]
-    },
-    "Разобрать массив записей": {
+    "Supabase: записи на завтра": {
       "main": [[{ "node": "По одной записи", "type": "main", "index": 0 }]]
     },
     "По одной записи": {
       "main": [
-        [{ "node": "GET клиент по tg_id", "type": "main", "index": 0 }],
+        [{ "node": "Supabase: клиент по tg_id", "type": "main", "index": 0 }],
         []
       ]
     },
-    "GET клиент по tg_id": {
+    "Supabase: клиент по tg_id": {
       "main": [[{ "node": "Объединить + выбрать канал", "type": "main", "index": 0 }]]
     },
     "Объединить + выбрать канал": {
