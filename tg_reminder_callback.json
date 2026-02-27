@@ -1,0 +1,356 @@
+{
+  "name": "TG Reminder - Обработка ответов на кнопки",
+  "nodes": [
+    {
+      "id": "d001-0000-0000-0000-000000000001",
+      "name": "Telegram Callback Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "ЗАМЕНИ_НА_УНИКАЛЬНЫЙ_UUID",
+      "parameters": {
+        "updates": ["callback_query"],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "56b5PgNwe1YoXmQn",
+          "name": "test"
+        }
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000002",
+      "name": "Разобрать callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "jsCode": "const update = $input.first().json;\nconst cq = update.callback_query;\n\n// Защита от не-callback апдейтов\nif (!cq || !cq.data) return [];\n\n// Формат: \"confirm_123456\", \"reschedule_123456\", \"cancel_123456\"\nconst underscoreIdx = cq.data.indexOf('_');\nconst action    = cq.data.substring(0, underscoreIdx);\nconst recordId  = cq.data.substring(underscoreIdx + 1);\n\nreturn [{\n  json: {\n    query_id:        cq.id,\n    chat_id:         String(cq.message.chat.id),\n    message_id:      cq.message.message_id,\n    action:          action,\n    record_id:       recordId,\n    from_first_name: cq.from.first_name || ''\n  }\n}];"
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000003",
+      "name": "answerCallbackQuery",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [480, 300],
+      "parameters": {
+        "resource": "callback",
+        "operation": "answerQuery",
+        "queryId": "={{ $json.query_id }}",
+        "additionalFields": { "showAlert": false }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "56b5PgNwe1YoXmQn",
+          "name": "test"
+        }
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000004",
+      "name": "GET appointment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/appointments?record_id=eq.' + $('Разобрать callback').item.json.record_id + '&select=record_id,date,tg_id,YC_ID,client_id,clientName,service_name,master_name,master_id,status' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000005",
+      "name": "GET клиент",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (function() { const appt = $input.first().json; const tgId = Array.isArray(appt) ? appt[0].tg_id : appt.tg_id; return 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/clients_tg?tg_id=eq.' + tgId + '&select=tg_id,first_name,last_name,tg_username,blocked,can_message'; })() }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000006",
+      "name": "Объединить данные",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "parameters": {
+        "jsCode": "// Данные из callback\nconst cb = $('Разобрать callback').item.json;\n\n// Данные из GET appointment\nconst apptRaw = $('GET appointment').item.json;\nconst appt = Array.isArray(apptRaw) ? apptRaw[0] : apptRaw;\nif (!appt) return [];\n\n// Данные из GET клиент\nconst clientRaw = $input.first().json;\nconst client = Array.isArray(clientRaw) && clientRaw.length > 0 ? clientRaw[0] : {};\n\n// Форматируем дату\nconst dt = new Date(appt.date);\nconst dateFormatted = dt.toLocaleDateString('ru-RU', {\n  day: 'numeric', month: 'long', timeZone: 'Europe/Moscow'\n}) + ' в ' + dt.toLocaleTimeString('ru-RU', {\n  hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'\n});\n\nconst clientName = client.first_name\n  ? (client.first_name + (client.last_name ? ' ' + client.last_name : ''))\n  : (appt.clientName || 'Клиент');\n\nreturn [{\n  json: {\n    // из callback\n    query_id:      cb.query_id,\n    chat_id:       cb.chat_id,\n    message_id:    cb.message_id,\n    action:        cb.action,\n    // из appointment\n    record_id:     appt.record_id,\n    YC_ID:         appt.YC_ID,\n    master_id:     appt.master_id,\n    service_name:  appt.service_name || '',\n    master_name:   appt.master_name  || '',\n    date_formatted: dateFormatted,\n    date_raw:      appt.date,\n    // из клиента\n    client_name:   clientName,\n    tg_username:   client.tg_username || ''\n  }\n}];"
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000007",
+      "name": "Маршрутизация по действию",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [1440, 300],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            { "value2": "confirm",    "output": 0 },
+            { "value2": "reschedule", "output": 1 },
+            { "value2": "cancel",     "output": 2 }
+          ]
+        },
+        "fallbackOutput": "none"
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000008",
+      "name": "[Приду] editMessage",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1680, 80],
+      "parameters": {
+        "resource": "message",
+        "operation": "editMessageText",
+        "messageId": "={{ $json.message_id }}",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=✅ *Визит подтверждён*\n\n🗓 {{ $json.date_formatted }}\n✂️ {{ $json.service_name }}\n\nОтлично, ждём вас!",
+        "additionalFields": { "parse_mode": "Markdown", "replyMarkup": "none" }
+      },
+      "credentials": { "telegramApi": { "id": "56b5PgNwe1YoXmQn", "name": "test" } }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000009",
+      "name": "[Приду] PATCH confirmed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 80],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/appointments?record_id=eq.' + $json.record_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"reminder_24h\": \"confirmed\"}",
+        "options": {}
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000010",
+      "name": "[Приду] Отправить подтверждение",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2160, 80],
+      "parameters": {
+        "chatId": "={{ $('Объединить данные').item.json.chat_id }}",
+        "text": "=Спасибо! Ждём вас {{ $('Объединить данные').item.json.date_formatted }} 🎉\n\nЕсли что-то изменится — напишите нам заранее.",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "credentials": { "telegramApi": { "id": "56b5PgNwe1YoXmQn", "name": "test" } }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000011",
+      "name": "[Перенести] editMessage",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1680, 300],
+      "parameters": {
+        "resource": "message",
+        "operation": "editMessageText",
+        "messageId": "={{ $json.message_id }}",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=🔄 *Запрос на перенос принят*\n\n🗓 {{ $json.date_formatted }}\n\nМы свяжемся с вами для согласования нового времени.",
+        "additionalFields": { "parse_mode": "Markdown", "replyMarkup": "none" }
+      },
+      "credentials": { "telegramApi": { "id": "56b5PgNwe1YoXmQn", "name": "test" } }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000012",
+      "name": "[Перенести] PATCH reschedule_requested",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 300],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/appointments?record_id=eq.' + $json.record_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"reminder_24h\": \"reschedule_requested\"}",
+        "options": {}
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000013",
+      "name": "[Перенести] Отправить запрос в чат",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2160, 300],
+      "parameters": {
+        "chatId": "={{ $('Объединить данные').item.json.chat_id }}",
+        "text": "Я хочу перенести запись",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "credentials": { "telegramApi": { "id": "56b5PgNwe1YoXmQn", "name": "test" } }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000014",
+      "name": "[Не смогу] editMessage",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1680, 520],
+      "parameters": {
+        "resource": "message",
+        "operation": "editMessageText",
+        "messageId": "={{ $json.message_id }}",
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=❌ *Запись отменена*\n\n🗓 {{ $json.date_formatted }}\n\nЖалеем, что не получится. Будем рады видеть вас в другой раз!",
+        "additionalFields": { "parse_mode": "Markdown", "replyMarkup": "none" }
+      },
+      "credentials": { "telegramApi": { "id": "56b5PgNwe1YoXmQn", "name": "test" } }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000015",
+      "name": "[Не смогу] PATCH cancelled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 520],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://ugocvtuomyopullvilim.supabase.co/rest/v1/appointments?record_id=eq.' + $json.record_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnb2N2dHVvbXlvcHVsbHZpbGltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwOTcxMjIsImV4cCI6MjA4NzY3MzEyMn0.rx7-A9_-WYWGRgZhDRwvLU3Roqds14Tv-DUqL9NJXrk" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"reminder_24h\": \"cancelled\", \"status\": \"cancelled\"}",
+        "options": {}
+      }
+    },
+    {
+      "id": "d001-0000-0000-0000-000000000016",
+      "name": "[Не смогу] YClients DELETE запись",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 520],
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ 'https://api.yclients.com/api/v1/record/ЗАМЕНИ_COMPANY_ID/' + $('Объединить данные').item.json.record_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ЗАМЕНИ_НА_YCLIENTS_USER_TOKEN"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.yclients.v2+json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Callback Trigger": {
+      "main": [[{ "node": "Разобрать callback", "type": "main", "index": 0 }]]
+    },
+    "Разобрать callback": {
+      "main": [[{ "node": "answerCallbackQuery", "type": "main", "index": 0 }]]
+    },
+    "answerCallbackQuery": {
+      "main": [[{ "node": "GET appointment", "type": "main", "index": 0 }]]
+    },
+    "GET appointment": {
+      "main": [[{ "node": "GET клиент", "type": "main", "index": 0 }]]
+    },
+    "GET клиент": {
+      "main": [[{ "node": "Объединить данные", "type": "main", "index": 0 }]]
+    },
+    "Объединить данные": {
+      "main": [[{ "node": "Маршрутизация по действию", "type": "main", "index": 0 }]]
+    },
+    "Маршрутизация по действию": {
+      "main": [
+        [{ "node": "[Приду] editMessage",      "type": "main", "index": 0 }],
+        [{ "node": "[Перенести] editMessage",  "type": "main", "index": 0 }],
+        [{ "node": "[Не смогу] editMessage",   "type": "main", "index": 0 }]
+      ]
+    },
+    "[Приду] editMessage": {
+      "main": [[{ "node": "[Приду] PATCH confirmed", "type": "main", "index": 0 }]]
+    },
+    "[Приду] PATCH confirmed": {
+      "main": [[{ "node": "[Приду] Отправить подтверждение", "type": "main", "index": 0 }]]
+    },
+    "[Перенести] editMessage": {
+      "main": [[{ "node": "[Перенести] PATCH reschedule_requested", "type": "main", "index": 0 }]]
+    },
+    "[Перенести] PATCH reschedule_requested": {
+      "main": [[{ "node": "[Перенести] Отправить запрос в чат", "type": "main", "index": 0 }]]
+    },
+    "[Не смогу] editMessage": {
+      "main": [[{ "node": "[Не смогу] PATCH cancelled", "type": "main", "index": 0 }]]
+    },
+    "[Не смогу] PATCH cancelled": {
+      "main": [[{ "node": "[Не смогу] YClients DELETE запись", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "448605b2d85039fda3236eb2e96b6b266eec110c39c8f8814847e4541b63dac6"
+  }
+}
